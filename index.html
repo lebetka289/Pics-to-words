@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Pics to words. Игра для изучения иностранных языков</title>
+    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.18.5/babel.min.js"></script>
+
+    <script src="data.js"></script>
+    <script src="settings.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App words={words} />);
+
+        const useGame = (words, difficulty) => {
+            const [finishedItems, setFinishedItems] = React.useState([]);
+            const [stepsCount, setStepsCount] = React.useState(0);
+            const [gameWords, setGameWords] = React.useState([]);
+
+            const LIVES_COUNT = difficulty === 'easy' ? 5 : 3;
+            const WORD_COUNT = difficulty === 'easy' ? 8 : 16; // More words for hard difficulty
+            window.LIVES_COUNT = LIVES_COUNT;
+            React.useEffect(() => {
+                setGameWords(getRandomWords(words, WORD_COUNT));
+                setFinishedItems([]);
+                setStepsCount(0); // Reset step count
+            }, [words, difficulty]);
+
+            const checkItems = (firstItem, secondItem) => {
+                const firstWord = gameWords.find(({ id }) => id === firstItem);
+                const secondWord = gameWords.find(({ id }) => id === secondItem);
+                if (firstWord.type !== secondWord.type && firstWord.token === secondWord.token) {
+                    setFinishedItems((items) => [...items, firstItem, secondItem]);
+                }
+                setStepsCount((count) => count + 1);
+            };
+
+            const handleReset = () => {
+                setFinishedItems([]);
+                setStepsCount(0);
+                setGameWords(getRandomWords(words, WORD_COUNT));
+            };
+
+            const errorsCount = stepsCount - finishedItems.length / 2;
+            const lives = LIVES_COUNT - errorsCount;
+            const isWin = finishedItems.length === gameWords.length;
+            const isGameOver = isWin || lives <= 0;
+
+            return {
+                finishedItems,
+                handleReset,
+                checkItems,
+                errorsCount,
+                isGameOver,
+                isWin,
+                gameWords,
+                lives
+            };
+        };
+
+        const getRandomWords = (words, count) => {
+            const uniqueTokens = [...new Set(words.map(word => word.token))];
+            const selectedTokens = uniqueTokens.sort(() => Math.random() - 0.5).slice(0, Math.ceil(count / 2));
+            const selectedWords = [];
+
+            selectedTokens.forEach(token => {
+                const matchingWords = words.filter(word => word.token === token).slice(0, 2);
+                selectedWords.push(...matchingWords);
+            });
+
+            return selectedWords.sort(() => Math.random() - 0.5).slice(0, count); // Limit to requested count
+        };
+
+        function App({ words = [] }) {
+            const [difficulty, setDifficulty] = React.useState('easy'); // Default difficulty
+            const { finishedItems, handleReset, checkItems, errorsCount, isGameOver, isWin, gameWords } = useGame(words, difficulty);
+
+            const modalClassName = isWin ? '' : 'modal-box-lose';
+            const modalCaption = isWin ? 'Легенда' : 'Посос';
+            const modalDescription = `Вы нашли ${finishedItems.length / 2} слова`;
+
+            return (
+                <section className="game">
+                    <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="difficulty-selector">
+                        <option value="easy">Легкий</option>
+                        <option value="hard">Сложный</option>
+                    </select>
+                    <GameHeader value={finishedItems.length} max={gameWords.length} errorsCount={errorsCount} />
+                    <Grid words={gameWords} finishedItems={finishedItems} checkItems={checkItems} />
+                    {isGameOver && (
+                        <Modal className={modalClassName} caption={modalCaption} description={modalDescription} onReset={handleReset} />
+                    )}
+                </section>
+            );
+        }
+
+
+        function GameHeader({ value, max, errorsCount }) { //шапка игры
+            return (
+                <>
+                    <img src="img/pics-to-words.svg" width="112" height="16" alt="Pics to words" />
+                    <Progress value={value} max={max} />
+                    <Hearts count={LIVES_COUNT} value={errorsCount} />
+                </>
+            );
+        }
+
+        function Hearts({ count = 0, value = 0 }) {
+            return (
+                <p className="hit-points-indicator">
+                    {Array(count).fill(null).map((_, i) => (
+                        <span className={i < value ? 'hit-points-used' : 'hit-points-unused'} />
+                    ))}
+                </p>
+            );
+        }
+
+        function Modal({ className, caption, description, onReset }) { //модальное окно
+            return (
+                <div className="modal">
+                    <div className={`modal-box ${className}`}>
+                        <h3 className="modal-caption">{caption}</h3>
+                        <p className="modal-description">{description}</p>
+                        <button onClick={onReset} className="button" type="button">Новая игра</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function Progress({ value, max }) {  //сколько осталось полоска, вся полоска = 100%
+            return (
+                <div className="progress-wrapper">
+                    <div className="progress" style={{ width: `${(max - value) / max * 100}%` }}></div>
+                </div>
+            );
+        }
+
+        function Grid({ words, finishedItems, checkItems }) {
+            const [selectedItems, setSelectedItems] = React.useState([]);
+
+            const handleCardClick = (id) => {
+                if (selectedItems.includes(id)) {
+                    return;
+                }
+                switch (selectedItems.length) {
+                    case 0:
+                        setSelectedItems([id]);
+                        break;
+                    case 1:
+                        setSelectedItems((items) => [...items, id]);
+                        checkItems(selectedItems[0], id);
+                        setTimeout(() => {
+                            setSelectedItems([]);
+                        }, 800);
+                        break;
+                    case 2:
+                        setSelectedItems([id]);
+                        break;
+                    default:
+                        setSelectedItems([]);
+                }
+            };
+
+            const cards = words.map((item) => (
+                <Card
+                    key={item.id}
+                    item={item}
+                    isSelected={selectedItems.includes(item.id)}
+                    isFinished={finishedItems.includes(item.id)}
+                    isChecking={selectedItems.length === 2}
+                    onCardClick={handleCardClick}
+                />
+            ));
+            return (
+                <ul className="cards">
+                    {cards}
+                </ul>
+            );
+        }
+
+        function Card({ item, isSelected, isFinished, onCardClick, isChecking }) {
+            const { type, url, word: text, id } = item;
+            const content = type === 'image'
+                ? <img src={url} width="185" height="100" alt="" />
+                : <span>{text}</span>
+
+            const showError = isChecking && isSelected && !isFinished;
+
+            const className = `card ${isSelected ? 'selected' : ''
+                } ${isFinished ? 'disabled' : ''
+                }`;
+
+            const handleClick = () => {
+                if (isFinished) {
+                    return;
+                }
+                onCardClick(id);
+            };
+
+            return (
+                <li onClick={handleClick} className={className}>
+                    {content}
+                </li>
+            );
+        }
+
+
+    </script>
+
+</body>
+
+</html>

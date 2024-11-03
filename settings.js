@@ -1,0 +1,2 @@
+const TIMEOUT = 800;
+window.TIMEOUT = TIMEOUT;
