@@ -158,18 +158,26 @@ body {
 
 .progress-wrapper {
   display: flex;
-  justify-self: center;
-  width: 287px;
-  height: 12px;
-  background-color: #cfd7e4;
-
-  background-image: repeating-linear-gradient(to right, #cfd7e4, #cfd7e4 46px, #fffbef 46px, #fffbef 48px);
-  border-radius: 18px;
-  overflow: hidden;
+  gap: 5px;
 }
 
-.progress {
-  background-image: repeating-linear-gradient(to right, #2e63b2, #2e63b2 46px, #fffbef 46px, #fffbef 48px);
+/* Стили для отдельных блоков прогресса */
+.progress-wrapper {
+  display: flex;
+  gap: 5px;
+  /* Расстояние между блоками */
+}
+
+.progress-block {
+  width: 40px;
+  height: 20px;
+  border-radius: 5px;
+  background-color: #ddd;
+  transition: background-color 0.3s ease-in-out ;
+}
+
+.progress-block.completed {/* Цвет завершенных блоков */
+  background-color: #6970d4;
 }
 
 .cards {
@@ -371,6 +379,7 @@ body {
 }
 
 @keyframes shake {
+
   10%,
   90% {
     transform: translate3d(-1px, 0, 0);
@@ -397,6 +406,18 @@ body {
   from {
     transform: scale(1);
   }
+
+  50% {
+    color: #ffffff;
+    transform: scale(1.05);
+  }
+
+  to {
+    transform: scale(1);
+    color: #ffffff;
+    background-color: #cfd7e4;
+  }
+
 
   50% {
     color: #ffffff;

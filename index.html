@@ -136,10 +136,17 @@
             );
         }
 
-        function Progress({ value, max }) {  //сколько осталось полоска, вся полоска = 100%
+        function Progress({ value, max }) {
+            const progressArray = Array(max).fill(false).map((_, index) => index < value);
+
             return (
                 <div className="progress-wrapper">
-                    <div className="progress" style={{ width: `${(max - value) / max * 100}%` }}></div>
+                    {progressArray.map((isCompleted, index) => (
+                        <div
+                            key={index}
+                            className={`progress-block ${isCompleted ? 'completed' : 'not-completed'}`}
+                        ></div>
+                    ))}
                 </div>
             );
         }
