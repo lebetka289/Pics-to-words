@@ -27,7 +27,7 @@
             const [gameWords, setGameWords] = React.useState([]);
 
             const LIVES_COUNT = difficulty === 'easy' ? 5 : 3;
-            const WORD_COUNT = difficulty === 'easy' ? 8 : 16; // More words for hard difficulty
+            const WORD_COUNT = difficulty === 'easy' ? 8 : 16; 
             window.LIVES_COUNT = LIVES_COUNT;
             React.useEffect(() => {
                 setGameWords(getRandomWords(words, WORD_COUNT));
